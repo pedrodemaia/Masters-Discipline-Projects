@@ -1,0 +1,2 @@
+        Problem,     n,     m,             fopt,       copt,     cpu-bb,    cpu-Sub,        cpu, ncall, Nodes 
+        expTerm,     1,    10,          371.188,    0.00000,       5.57,       0.98,       6.55,     4,     0 

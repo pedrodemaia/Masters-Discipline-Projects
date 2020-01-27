@@ -1,0 +1,183 @@
+---
+title: "Case Study 02"
+author: "Frederico Augustos (Coordenador), Mariana Pimenta (Verificador), Patrícia Vaz (Monitor), Pedro Maia (Relator)"
+date: "30 de setembro de 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introdução
+
+Segundo dados disponíveis no site da [*Organização Mundial da Saúde (OMS)*](https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight), a obesidade no mundo quase triplicou desde 1975. Em 2016, mais de 1.9 bilhão de adultos estavam obesos e na maioria dos países a obesidade mata mais que a desnutrição. Além disso, segundo a [*The American Heart Association*](https://www.heart.org/en/healthy-living/healthy-eating/losing-weight/extreme-obesity-and-what-you-can-do), a obesidade está associada ao aumento da incidência de doenças cardíacas. Nesse contexto, faz-se necessário o acompanhamento da evolução da obesidade na comunidade acadêmica. Um dos indicadores mais usados para medir obesidade, apesar de suas limitações, é o Indice de Massa Corporal (IMC). Com o objetivo de entender a evoluçao da obesidade nos alunos do programa de  pós graduação em engenharia elétrica (PPGEE), fez-se uso de inferência estatística e analisou-se o IMC por gênero das turmas de 2016 e 2017. Para a análise dos dados da população masculina, mostrou-se a sua normalidade e aplicou-se testes paramétricos para determinar se o IMC médio da turma de 2017 foi maior do que o da turma de 2016. No caso da população femnina, não foi possível assumir a normalidade dos dados e testes não paramétricos foram realizados. Em ambos os casos, ao contrário da tendência mundial, constatou-se que o IMC dos alunos do PPGEE não apresentou aumento estátisco relevante.
+
+
+## Definição da hipóteses
+
+Para realizar inferências em relação ao IMC médio das duas populações de alunos da PPGEE, foi definido um teste de hipóteses. O parâmetro de interesse analisado representa a diferença das médias das populações de alunos nos anos de 2016 e 2017.
+
+\begin{equation}
+\begin{cases}
+  H_0: \mu_{IMC 17} - \mu_{IMC 16} = 0 \\
+  H_1: \mu_{IMC 17} - \mu_{IMC 16} > 0
+\end{cases}
+\end{equation}
+
+## Leitura dos dados
+
+A primeira etapa consistiu em isolar os dados de interesse. Devido ao fato de que as subpopulações feminina e masculina apresentam perfis diferentes, as amostras também foram subdivididas e analisadas de forma independente. 
+
+```{r}
+data_2016 <- read.csv("imc_20162.csv")
+data_2016 <- data_2016[data_2016$Course=="PPGEE",]
+data_2016_f <- data_2016[data_2016$Gender=="F",]
+data_2016_m <- data_2016[data_2016$Gender=="M",]
+
+data_2017 <- read.csv("CS01_20172.csv", sep=';')
+data_2017_f <- data_2017[data_2017$Sex=="F",]
+data_2017_m <- data_2017[data_2017$Sex=="M",]
+
+```
+
+## Cálculo do IMC
+
+O Índice de Massa Corporal é uma parâmetro internacional para avaliar a massa corporal ideal dos seres humunos. Seu cálculo é feito pelo quociente da massa corporal (em Kg) pelo quadrado da estatura do mesmo individuo (m).
+
+```{r}
+data_2016_f$imc <- data_2016_f$Weight.kg/(data_2016_f$Height.m)^2
+data_2016_m$imc <- data_2016_m$Weight.kg/(data_2016_m$Height.m)^2
+data_2017_f$imc <- data_2017_f$Weight.kg/(data_2017_f$height.m)^2
+data_2017_m$imc <- data_2017_m$Weight.kg/(data_2017_m$height.m)^2
+```
+
+## Remoção do outlier masculino
+
+Por meio da análise do boxplot do IMC das amostras masculinas de 2016 constatou-se que havia um outlier na amostra. Sendo assim, essa observação foi eliminada da amostra de 2016.
+
+```{r}
+boxplot(data_2016_m$imc)
+data_2016_m <- data_2016_m[data_2016_m$imc != max(data_2016_m$imc),]
+```
+
+## Cálculo das médias e variâncias
+
+```{r}
+mu_16_f <- mean(data_2016_f$imc)
+sigma_16_f <- sd(data_2016_f$imc)
+mu_17_f <- mean(data_2017_f$imc)
+sigma_17_f <- sd(data_2017_f$imc)
+mu_16_m <- mean(data_2016_m$imc)
+sigma_16_m <- sd(data_2016_m$imc)
+mu_17_m <- mean(data_2017_m$imc)
+sigma_17_m <- sd(data_2017_m$imc)
+```
+
+## Teste Masculino
+
+### Checando normalidade
+
+Assumindo independência durante o processo de obtenção e que o peso e altura são características de cada indivíduo, uma premissa a ser validade é a normalidade dos dados. Foi utilizado o teste de Shapiro-Wilk para avaliar a normalidade dos dados. Adotou-se para este e para os demais testes a serem aplicados neste estudos o nível de confiança de 95% a menos que expressamente declarado outro valor.
+
+```{r}
+shapiro.test(data_2016_m$imc)
+shapiro.test(data_2017_m$imc)
+```
+
+Analisando os p-values de ambos os anos assumiu-se  a normalidade das distribuições de IMC pois,o  p-value de 2016 tanto quanto o de 2017 ficaram acima do nível de significância proposto no teste.
+
+### Checando homocedasticidade
+
+Se tratando de um estudo de comparação entre duas amostras, outra premissa a ser verificada é a homocedasticidade, que avalia o quão diferente são as variâncias de cada amostra. Foi utilizado o teste F para comparar as variâncias dos dados de 2016 e 2017, com a premissa que as populações são normais, validando assim a aplicação do teste.
+
+```{r}
+alpha <- 0.05
+var.test(data_2017_m$imc, data_2016_m$imc, alternative = "two.sided", mu=0, 
+         var.equal=FALSE, conf.level = 1-alpha, paired = FALSE)
+```
+
+Dado que o p-value obtido  é maior que o nível de significância empregado no teste, não se pode assumir que as variâncias das amostras são diferentes. Portanto, assumiu-se que as variâncias são iguais para o nível de significância aplicado.
+
+### Estimação do tamanho de efeito 
+
+Os tamanhos das amostras estudadas são distintos, dessa forma utilizou-se uma variação do teste t que se aplica para esse formato de dados e também, previamente concluido, que as variâncias das amostras podem ser iguais. Foi considerado a potência de 80%  e  o número de amostras n1 e n2 fornecido pela base de dados para a aplicação do teste, com o intuito de estimar o tamanho de efeito.
+
+```{r}
+library("pwr")
+pwr.t2n.test(n1=length(data_2016_m$imc), n2=length(data_2017_m$imc), 
+             sig.level=alpha, power=0.8, alternative="greater")
+```
+
+O tamanho de efeito obtido pela realização do teste foi 0.79. Um valor que expressa um resultado adequado para o nível de significância desejado e pelo número de amostras do estudo, 20 amostras. 
+
+### Execução do teste de hipótese
+
+Por fim, para testar a hipótese proposta no estudo realizou-se o teste t de student. O intuito é testar se os alunos do sexo masculino da PPGE de 2017 possuem o IMC igual aos dos alunos de 2016.
+
+```{r}
+t.test(data_2017_m$imc, data_2016_m$imc, alternative = "greater", var.equal = TRUE, 
+       conf.level = 1-alpha)
+```
+
+Como  o p-value foi muito maior que o nível de significância, não podemos rejeitar a hipótese nula. Isso significa que não é possível afirmar que o IMC dos alunos do sexo masculino o PPGEE aumentou de 2016 para 2017.
+
+De forma análoga, o teste pode ser calculado da seguinte forma:
+
+```{r}
+n1 = length(data_2016_m$imc)
+n2 = length(data_2017_m$imc)
+sp = sqrt(((n1-1)*sigma_16_m^2 + (n2-1)*sigma_17_m^2)/(n1+n2-2))
+t0 = (mu_16_m - mu_17_m)/(sp*sqrt(1/n1+1/n2))
+p_value = pt(t0,df = n1+n2-2)
+
+cat("Estatística de teste: ", t0,"\np-value: ", p_value)
+```
+Esse cálculo considera uma distribuição t-student $n_1 + n_2 - 2$ graus de liberdade.
+
+## Teste feminino
+
+### Checando normalidade
+
+Aplicou-se o teste Shapiro-Wilk para verificar a normalidade dos dados.
+
+```{r}
+shapiro.test(data_2016_f$imc)
+shapiro.test(data_2017_f$imc)
+```
+
+Como o número de observações das amostras de 2017 é muito pequeno (igual a 4) e a distribuição dos IMCs da amostra de 2016 evidencia uma não normalidade, optou-se pela utilização de um método não-paramétrico, o teste de Wilcoxon-Mann-Whitney. Esse teste assume que as amostras sejam da mesma distribuição, e foi considerado tal premissa válida pois a análise dos dados foi feita dentro de um mesmo grupo de indivíduos sob condições semelhantes. 
+
+### Execução do teste de hipótese não paramétrico
+
+O teste foi realizado considerando um nível de significância de 5%.
+
+```{r}
+wilcox.test(data_2017_f$imc, data_2016_f$imc, alternative = "greater", mu = 0, 
+            paired = FALSE, conf.level = 1-alpha)
+```
+
+Como o p-value ficou próximo de 1, não é possível afirmar que o IMC das pessoas do sexo feminino do PPGEE aumentou de 2016 para 2017, logo o teste falhou em rejeitar a hipótese nula.
+Além da hipótese nula ser nossa hipótese fraca, não é possível tirar muitas conclusões devido ao tamanho das amostras.
+
+### Cálculo do intervalo de confiança
+
+Como foi utilizado um teste não paramétrico, o cálculo do intervalo de confiança realizado também foi não paramétrico. A técnica de *bootstrapping* para duas variáveis é usada para realizar o cálculo.
+
+```{r}
+library(boot)
+library(simpleboot)
+boot.out <- two.boot(data_2016_f$imc, data_2017_f$imc, mean, R=999)
+boot.ci(boot.out, conf = 1 - alpha, type = 'bca')
+```
+
+Esses resultados mostram que o intervalo de confiança $\mu_{IMC 17} - \mu_{IMC 16} \geq 0$ com 95% de confiança, o que contradiz os resultados obtidos pelo teste de Wilcoxon-Mann-Whitney.
+
+Essa contradição reforça como é complicado realizar inferências quando o número de observações disponíveis é muito baixo.
+
+### Estimação do tamanho de efeito 
+
+Como foi utilizado um teste não paramétrico, o cálculo do tamanho de efeito e a potência do teste não são aplicáveis.
+
+## Conclusão
+
+Por meio dos resultados obtidos podemos afirmar que não se detectou diferença  estatisticamente relevante para o valor de IMC médio de ambas populações masculinas e femininas, das amostras de 2017 e 2016. Uma das formas de tornar o presente estudo mais robusto seria aumentar o número de observações, principalmente para o sexo feminino. Entretanto, como o número de observações das amostras geralmente não pode ser aumentado, visto que o número de alunas admitidas no PPGEE é feito de critérios a parte desse estudo, uma das sugestões seria ampliar os dados com alunos e alunas de outros programas de pós graduação em engenharia. Desse modo, apesar da perda de especificidade do estudos, conclusões mais fortes poderiam ser obtidas. 
